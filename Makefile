@@ -26,13 +26,16 @@ stop:
 down:
 	docker compose -f $(YAML) down
 
-re: down build up
+re: down build run
 
 logs:
 	docker compose -f $(YAML) logs -f
 
 clean:
 	docker compose -f $(YAML) down --volumes --rmi all
+
+fclean: clean
+	docker system prune -a --volumes -f
 
 status:
 	docker compose -f $(YAML) ps
