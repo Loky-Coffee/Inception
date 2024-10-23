@@ -1,0 +1,54 @@
+services:
+  mariadb:
+    build: 
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: example_db
+      MYSQL_DATABASE: example_db
+      MYSQL_USER: example_db
+      MYSQL_PASSWORD: example_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - wordpress_network
+  
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: example_db
+      WORDPRESS_DB_PASSWORD: example_db
+      WORDPRESS_DB_NAME: example_db
+    volumes:
+      - wordpress_data:/var/www/html
+    ports:
+      - "9000:9000"
+    depends_on:
+      - mariadb
+    networks:
+      - wordpress_network
+
+  nginx:
+    build: 
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - wordpress
+    volumes:
+      - wordpress_data:/var/www/html:ro
+    networks:
+      - wordpress_network
+
+volumes:
+  mariadb_data:
+  wordpress_data:
+
+networks:
+  wordpress_network:

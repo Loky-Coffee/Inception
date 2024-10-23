@@ -23,6 +23,8 @@ RUN mkdir -p /var/lib/mysql /var/run/mysqld && \
 
 RUN echo '[mysqld]\nskip-host-cache\nskip-name-resolve' > /etc/mysql/conf.d/docker.cnf
 
+RUN mysql_install_db --user=mysql --datadir=/var/lib/mysql
+
 USER mysql
 
 EXPOSE 3306
