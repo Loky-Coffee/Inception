@@ -1,0 +1,13 @@
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+distinguished_name = dn
+
+[dn]
+C=DE
+ST=Baden-Wuerttemberg
+L=Heilbronn
+O=42School Root CA
+OU=IT
+CN=42School Root CA

@@ -27,6 +27,9 @@ stop:
 down:
 	docker compose -f $(YAML) down
 
+down-v:
+	docker compose -f $(YAML) down -v
+
 re: down build run
 
 logs:
@@ -38,7 +41,11 @@ clean:
 fclean: clean
 	docker system prune -a --volumes -f
 
+fcleanall: fclean
+	docker network prune -f
+	docker volume prune -f
+
 status:
 	docker compose -f $(YAML) ps
 
-.PHONY: all build run stop down re logs clean fclean status
+.PHONY: all build run stop down re logs clean fclean fcleanall status
