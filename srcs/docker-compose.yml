@@ -8,14 +8,18 @@ services:
       - "3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+    secrets:
+      - db_password
+      - db_root_password
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
     networks:
       - wordpress_network
     restart: always
+    init: true
 
   wordpress:
     build:
@@ -26,22 +30,28 @@ services:
       - "9000"
     volumes:
       - wordpress_data:/var/www/html
+      - ./requirements/wordpress/:/var/www/html/wp-config.php
+    secrets:
+      - db_password
+      - wp_admin_password
+      - wp_user_password
     environment:
       - WORDPRESS_DB_HOST=mariadb
       - WORDPRESS_DB_NAME=${MYSQL_DATABASE}
       - WORDPRESS_DB_USER=${MYSQL_USER}
-      - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
+      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password
       - WP_ADMIN_USER=${WP_ADMIN_USER}
-      - WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD}
+      - WP_ADMIN_PASSWORD_FILE=/run/secrets/wp_admin_password
       - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
       - WP_USER=${WP_USER}
-      - WP_USER_PASSWORD=${WP_USER_PASSWORD}
+      - WP_USER_PASSWORD_FILE=/run/secrets/wp_user_password
       - WP_USER_EMAIL=${WP_USER_EMAIL}
     depends_on:
       - mariadb
     networks:
       - wordpress_network
     restart: always
+    init: true
 
   nginx:
     build: 
@@ -52,16 +62,30 @@ services:
       - "443:443"
     volumes:
       - wordpress_data:/var/www/html:ro
+      - ./certificates:/etc/nginx/ssl
     depends_on:
       - wordpress
     networks:
       - wordpress_network
     restart: always
+    init: true
 
 volumes:
   mariadb_data:
+    driver: local
   wordpress_data:
+    driver: local
 
 networks:
   wordpress_network:
     driver: bridge
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+  wp_admin_password:
+    file: ./secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ./secrets/wp_user_password.txt
