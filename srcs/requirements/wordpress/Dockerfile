@@ -13,15 +13,18 @@ RUN apt-get update && apt-get install -y \
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG=en_US.utf8
 
-RUN mkdir -p /var/www/html
-
+# Korrigierter WordPress-Installationspfad
+WORKDIR /var/www/html
 RUN wget https://wordpress.org/latest.tar.gz && \
-    tar -xvzf latest.tar.gz && \
-    mv wordpress/ /var/www/html/ && \
-    rm -rf wordpress latest.tar.gz
+    tar -xzf latest.tar.gz --strip-components=1 && \
+    rm latest.tar.gz
 
+# Korrekte Berechtigungen setzen
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html
+
+# PHP-FPM Konfiguration anpassen
+RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/g' /etc/php/8.2/fpm/pool.d/www.conf
 
 EXPOSE 9000
 

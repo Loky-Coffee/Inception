@@ -1,3 +1,4 @@
+#dockerfile Nginx
 FROM debian:stable-slim
 
 RUN apt-get update && apt-get install -y \
@@ -5,15 +6,18 @@ RUN apt-get update && apt-get install -y \
     gnupg2 \
     ca-certificates \
     lsb-release \
-    apt-transport-https
+    apt-transport-https \
+    openssl
 
 RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add -
-
 RUN echo "deb https://nginx.org/packages/debian `lsb_release -cs` nginx" \
     | tee /etc/apt/sources.list.d/nginx.list
 
 RUN apt-get update && apt-get install -y nginx
 
-EXPOSE 80
+COPY tools.sh /usr/local/bin/tools.sh
+RUN chmod +x /usr/local/bin/tools.sh
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 443
+
+CMD ["/bin/bash", "-c", "/usr/local/bin/tools.sh && nginx -g 'daemon off;'"]
