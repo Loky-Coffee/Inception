@@ -15,6 +15,7 @@ RUN echo "deb https://nginx.org/packages/debian `lsb_release -cs` nginx" \
 
 RUN apt-get update && apt-get install -y nginx
 
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY tools.sh /usr/local/bin/tools.sh
 RUN chmod +x /usr/local/bin/tools.sh
 

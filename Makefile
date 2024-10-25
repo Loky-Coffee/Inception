@@ -10,6 +10,7 @@
 #                                                                              #
 # **************************************************************************** #
 
+NAME = inception
 YAML = srcs/docker-compose.yml
 
 all: build run
@@ -40,4 +41,4 @@ fclean: clean
 status:
 	docker compose -f $(YAML) ps
 
-.PHONY: all build run stop down re logs clean status
+.PHONY: all build run stop down re logs clean fclean status
