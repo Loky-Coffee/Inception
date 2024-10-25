@@ -30,7 +30,6 @@ services:
       - "9000"
     volumes:
       - wordpress_data:/var/www/html
-      - ./requirements/wordpress/:/var/www/html/wp-config.php
     secrets:
       - db_password
       - wp_admin_password
@@ -82,10 +81,10 @@ networks:
 
 secrets:
   db_password:
-    file: ./secrets/db_password.txt
+    file: ../secrets/db_password.txt
   db_root_password:
-    file: ./secrets/db_root_password.txt
+    file: ../secrets/db_root_password.txt
   wp_admin_password:
-    file: ./secrets/wp_admin_password.txt
+    file: ../secrets/wp_admin_password.txt
   wp_user_password:
-    file: ./secrets/wp_user_password.txt
+    file: ../secrets/wp_user_password.txt
