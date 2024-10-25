@@ -1,6 +1,6 @@
 FROM debian:stable-slim
 
-# Kombinieren Sie alle apt-get Befehle in einem RUN, um die Image-Größe zu reduzieren
+# Installiere notwendige Pakete
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg2 \
@@ -13,24 +13,25 @@ RUN apt-get update && apt-get install -y \
     | tee /etc/apt/sources.list.d/nginx.list \
     && apt-get update \
     && apt-get install -y nginx \
-    # Aufräumen um das Image kleiner zu halten
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Erstelle SSL-Verzeichnis
-RUN mkdir -p /etc/nginx/ssl
+# Erstelle notwendige Verzeichnisse
+RUN mkdir -p /etc/nginx/ssl /var/run/nginx
 
 # Kopiere Konfigurationsdateien
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY tools.sh /usr/local/bin/tools.sh
-RUN chmod +x /usr/local/bin/tools.sh
+COPY conf/nginx.conf /etc/nginx/conf.d/default.conf
+COPY tools/setup.sh /usr/local/bin/setup.sh
+COPY tools/ssl.sh /usr/local/bin/ssl.sh
 
-# SSL-Port exponieren
+# Setze Ausführungsrechte
+RUN chmod +x /usr/local/bin/setup.sh /usr/local/bin/ssl.sh
+
+# Setze Berechtigungen
+RUN chown -R nginx:nginx /etc/nginx/ssl /var/run/nginx /var/cache/nginx
+
 EXPOSE 443
 
-# Healthcheck hinzufügen (optional, aber empfohlen)
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD curl -f https://localhost:443/ || exit 1
-
-# Starte Nginx
-CMD ["/bin/bash", "-c", "/usr/local/bin/tools.sh && nginx -g 'daemon off;'"]
+# Verwende setup.sh als Entrypoint
+ENTRYPOINT ["/usr/local/bin/setup.sh"]
+CMD ["nginx", "-g", "daemon off;"]
