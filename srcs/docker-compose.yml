@@ -3,50 +3,60 @@ services:
     build: 
       context: ./requirements/mariadb
       dockerfile: Dockerfile
-    environment:
-      MYSQL_ROOT_PASSWORD: example_db
-      MYSQL_DATABASE: example_db
-      MYSQL_USER: example_db
-      MYSQL_PASSWORD: example_db
-    ports:
-      - "3306:3306"
+    container_name: mariadb
+    expose:
+      - "3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     networks:
       - wordpress_network
-  
+    restart: always
+
   wordpress:
     build:
       context: ./requirements/wordpress
       dockerfile: Dockerfile
-    environment:
-      WORDPRESS_DB_HOST: mariadb
-      WORDPRESS_DB_USER: example_db
-      WORDPRESS_DB_PASSWORD: example_db
-      WORDPRESS_DB_NAME: example_db
-    volumes:
-      - wordpress_data:/var/www/html  # Gemeinsames Volume für NGINX und WordPress
+    container_name: wordpress
     expose:
-      - "9000"  # Expose statt externen Port
+      - "9000"
+    volumes:
+      - wordpress_data:/var/www/html
+    environment:
+      - WORDPRESS_DB_HOST=mariadb
+      - WORDPRESS_DB_NAME=${MYSQL_DATABASE}
+      - WORDPRESS_DB_USER=${MYSQL_USER}
+      - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
+      - WP_ADMIN_USER=${WP_ADMIN_USER}
+      - WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD}
+      - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+      - WP_USER=${WP_USER}
+      - WP_USER_PASSWORD=${WP_USER_PASSWORD}
+      - WP_USER_EMAIL=${WP_USER_EMAIL}
     depends_on:
       - mariadb
     networks:
       - wordpress_network
+    restart: always
 
   nginx:
     build: 
       context: ./requirements/nginx
       dockerfile: Dockerfile
+    container_name: nginx
     ports:
       - "443:443"
-    depends_on:
-      - wordpress
     volumes:
       - wordpress_data:/var/www/html:ro
-      - ./requirements/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./requirements/nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - wordpress
     networks:
       - wordpress_network
+    restart: always
 
 volumes:
   mariadb_data:
@@ -54,3 +64,4 @@ volumes:
 
 networks:
   wordpress_network:
+    driver: bridge

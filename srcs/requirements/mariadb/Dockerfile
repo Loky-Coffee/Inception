@@ -29,7 +29,6 @@ RUN mkdir -p /var/lib/mysql /var/run/mysqld && \
     chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
     chmod 777 /var/run/mysqld
 
-# Initialisiere die Datenbank und setze Benutzer
 RUN service mariadb start && \
     mysql -e "CREATE DATABASE IF NOT EXISTS example_db;" && \
     mysql -e "CREATE USER 'example_db'@'%' IDENTIFIED BY 'example_db';" && \
