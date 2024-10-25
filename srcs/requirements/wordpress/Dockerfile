@@ -1,31 +1,28 @@
 FROM debian:stable-slim
+
+# Installiere benötigte Pakete
 RUN apt-get update && apt-get install -y \
-    locales \
     php8.2 \
     php8.2-fpm \
     php8.2-mysql \
-    php8.2-gd \
-    php8.2-xml \
-    php8.2-mbstring \
-    php8.2-curl \
     wget \
-    unzip && rm -rf /var/lib/apt/lists/*
-RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
-ENV LANG=en_US.utf8
+    netcat-traditional \
+    && rm -rf /var/lib/apt/lists/*
 
-# Korrigierter WordPress-Installationspfad
 WORKDIR /var/www/html
+
+# Konfiguriere PHP-FPM
+RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/g' /etc/php/8.2/fpm/pool.d/www.conf
+
+# Hole WordPress
 RUN wget https://wordpress.org/latest.tar.gz && \
     tar -xzf latest.tar.gz --strip-components=1 && \
-    rm latest.tar.gz
+    rm latest.tar.gz && \
+    chown -R www-data:www-data /var/www/html
 
-# Korrekte Berechtigungen setzen
-RUN chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html
-
-# PHP-FPM Konfiguration anpassen
-RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/g' /etc/php/8.2/fpm/pool.d/www.conf
+COPY tools/setup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/setup.sh
 
 EXPOSE 9000
 
-CMD ["php-fpm8.2", "-F"]
+ENTRYPOINT ["/usr/local/bin/setup.sh"]

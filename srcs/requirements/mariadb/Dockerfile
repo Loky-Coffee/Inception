@@ -26,8 +26,6 @@ RUN chmod +x /usr/local/bin/init-db.sh && \
     chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
     chmod 777 /var/run/mysqld
 
-USER mysql
-
 EXPOSE 3306
 
 ENTRYPOINT ["/usr/local/bin/init-db.sh"]
