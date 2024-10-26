@@ -1,6 +1,6 @@
 services:
   mariadb:
-    build:
+    build: 
       context: ./requirements/mariadb
       dockerfile: Dockerfile
     container_name: mariadb
@@ -16,6 +16,7 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+      - MARIADB_PORT=${MARIADB_PORT}
     networks:
       - wordpress_network
     restart: always
@@ -34,6 +35,8 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - WP_DB_HOST=${WP_DB_HOST}
+      - MARIADB_PORT=${MARIADB_PORT}
+      - PHP_FPM_PORT=${PHP_FPM_PORT}
       - DOMAIN_NAME=${DOMAIN_NAME}
       - WP_ADMIN_USER=${WP_ADMIN_USER}
       - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
@@ -51,7 +54,7 @@ services:
     init: true
 
   nginx:
-    build:
+    build: 
       context: ./requirements/nginx
       dockerfile: Dockerfile
     container_name: nginx
@@ -59,9 +62,24 @@ services:
       - "${NGINX_PORT}:${NGINX_PORT}"
     volumes:
       - wordpress_data:/var/www/html:ro
-      - ${CERTS_PATH}:/etc/nginx/ssl:ro
+      - ./certificates:/etc/nginx/ssl:rw
     environment:
+      - NGINX_PORT=${NGINX_PORT}
+      - PHP_FPM_PORT=${PHP_FPM_PORT}
       - DOMAIN_NAME=${DOMAIN_NAME}
+      - SSL_CERTIFICATE=${SSL_CERTIFICATE}
+      - SSL_CERTIFICATE_KEY=${SSL_CERTIFICATE_KEY}
+      - SSL_PROTOCOLS=${SSL_PROTOCOLS}
+      - SSL_CIPHERS=${SSL_CIPHERS}
+      - CERTS_PATH=${CERTS_PATH}
+      - SSL_DAYS=${SSL_DAYS}
+      - ROOT_CA_DAYS=${ROOT_CA_DAYS}
+      - SSL_COUNTRY=${SSL_COUNTRY}
+      - SSL_STATE=${SSL_STATE}
+      - SSL_LOCALITY=${SSL_LOCALITY}
+      - SSL_ORGANIZATION=${SSL_ORGANIZATION}
+      - SSL_ORG_UNIT=${SSL_ORG_UNIT}
+      - SSL_ROOT_CN=${SSL_ROOT_CN}
     depends_on:
       - wordpress
     networks:

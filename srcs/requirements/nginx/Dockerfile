@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     nginx \
     openssl \
     netcat-traditional \
-    gettext-base \  # Für envsubst
+    gettext-base \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
