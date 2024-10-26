@@ -3,8 +3,8 @@
 echo "Starting setup script..."
 
 SSL_DIR="/etc/nginx/ssl"
-SSL_CERT="$SSL_DIR/nginx.crt"
-SSL_KEY="$SSL_DIR/nginx.key"
+SSL_CERT="${SSL_CERTIFICATE}"
+SSL_KEY="${SSL_CERTIFICATE_KEY}"
 SSL_CSR="$SSL_DIR/nginx.csr"
 SSL_CONFIG="$SSL_DIR/openssl.cnf"
 ROOT_CA_KEY="$SSL_DIR/rootCA.key"
@@ -22,12 +22,12 @@ default_md = sha256
 distinguished_name = dn
 
 [dn]
-C=DE
-ST=Baden-Wuerttemberg
-L=Heilbronn
-O=42School Root CA
-OU=IT
-CN=42School Root CA
+C=${SSL_COUNTRY}
+ST=${SSL_STATE}
+L=${SSL_LOCALITY}
+O=${SSL_ORGANIZATION} Root CA
+OU=${SSL_ORG_UNIT}
+CN=${SSL_ORGANIZATION} Root CA
 EOF
 
 # 2. Domain Konfigurationsdatei
@@ -40,12 +40,12 @@ req_extensions = req_ext
 distinguished_name = dn
 
 [dn]
-C=DE
-ST=Baden-Wuerttemberg
-L=Heilbronn
-O=42School
-OU=IT
-CN=aalatzas.42.fr
+C=${SSL_COUNTRY}
+ST=${SSL_STATE}
+L=${SSL_LOCALITY}
+O=${SSL_ORGANIZATION}
+OU=${SSL_ORG_UNIT}
+CN=${DOMAIN_NAME}
 
 [req_ext]
 subjectAltName = @alt_names
@@ -53,10 +53,11 @@ basicConstraints = CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
 
 [alt_names]
-DNS.1 = aalatzas.42.fr
-DNS.2 = www.aalatzas.42.fr
+DNS.1 = ${DOMAIN_NAME}
+DNS.2 = www.${DOMAIN_NAME}
 EOF
 
+# Überprüfen und Erstellen der Root CA
 if [ ! -f "$ROOT_CA_CERT" ] || [ ! -f "$ROOT_CA_KEY" ]; then
     echo "Creating Root CA..."
     openssl genrsa -out $ROOT_CA_KEY 4096
@@ -68,8 +69,9 @@ if [ ! -f "$ROOT_CA_CERT" ] || [ ! -f "$ROOT_CA_KEY" ]; then
         -config $SSL_DIR/root_ca.cnf
 fi
 
+# Überprüfen und Erstellen der SSL-Zertifikate
 if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
-    echo "Creating SSL certificates for aalatzas.42.fr..."
+    echo "Creating SSL certificates for ${DOMAIN_NAME}..."
     openssl genrsa -out $SSL_KEY 2048
     openssl req -new \
         -key $SSL_KEY \
@@ -85,25 +87,34 @@ if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
         -sha256 \
         -extensions req_ext \
         -extfile $SSL_CONFIG
-    
-    echo "SSL certificates created."
+
+    echo "SSL certificates created successfully."
     rm -f $SSL_CSR
 else
-    echo "SSL certificates already exist."
+    echo "SSL certificates already exist. Skipping creation."
 fi
 
-# Berechtigungen setzen
+# Setze korrekte Berechtigungen
 chmod 600 $SSL_KEY $ROOT_CA_KEY
 chmod 644 $SSL_CERT $ROOT_CA_CERT
 
-echo "Listing SSL directory contents:"
+echo "Current SSL directory contents:"
 ls -la $SSL_DIR
 
-# Warte auf WordPress
-echo "Waiting for WordPress..."
-while ! nc -z wordpress 9000; do
-    sleep 1
-done
+# Ersetze Umgebungsvariablen in der Nginx-Konfiguration
+echo "Configuring Nginx with environment variables..."
+envsubst '${NGINX_PORT} ${DOMAIN_NAME} ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_KEY} ${PHP_FPM_PORT} ${SSL_PROTOCOLS} ${SSL_CIPHERS}' \
+    < /etc/nginx/conf.d/default.conf.template \
+    > /etc/nginx/conf.d/default.conf
 
-echo "Starting NGINX..."
+# Warte auf WordPress
+echo "Waiting for WordPress container..."
+until nc -z wordpress ${PHP_FPM_PORT}; do
+    echo "Waiting for WordPress to start on port ${PHP_FPM_PORT}..."
+    sleep 2
+done
+echo "WordPress is ready!"
+
+# Starte Nginx
+echo "Starting NGINX with SSL support..."
 exec nginx -g "daemon off;"
