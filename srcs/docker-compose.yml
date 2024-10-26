@@ -1,11 +1,11 @@
 services:
   mariadb:
-    build: 
+    build:
       context: ./requirements/mariadb
       dockerfile: Dockerfile
     container_name: mariadb
     expose:
-      - "3306"
+      - "${MARIADB_PORT}"
     volumes:
       - mariadb_data:/var/lib/mysql
     secrets:
@@ -27,9 +27,18 @@ services:
       dockerfile: Dockerfile
     container_name: wordpress
     expose:
-      - "9000"
+      - "${PHP_FPM_PORT}"
     volumes:
       - wordpress_data:/var/www/html
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - WP_DB_HOST=${WP_DB_HOST}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - WP_ADMIN_USER=${WP_ADMIN_USER}
+      - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+      - WP_USER=${WP_USER}
+      - WP_USER_EMAIL=${WP_USER_EMAIL}
     secrets:
       - db_password
       - wp_admin_password
@@ -42,15 +51,17 @@ services:
     init: true
 
   nginx:
-    build: 
+    build:
       context: ./requirements/nginx
       dockerfile: Dockerfile
     container_name: nginx
     ports:
-      - "443:443"
+      - "${NGINX_PORT}:${NGINX_PORT}"
     volumes:
       - wordpress_data:/var/www/html:ro
-      - ./certificates:/etc/nginx/ssl
+      - ${CERTS_PATH}:/etc/nginx/ssl:ro
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
     depends_on:
       - wordpress
     networks:
@@ -63,13 +74,13 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${DATA_PATH}/mariadb
+      device: ${MARIADB_VOLUME}
       o: bind
   wordpress_data:
     driver: local
     driver_opts:
       type: none
-      device: ${DATA_PATH}/wordpress
+      device: ${WORDPRESS_VOLUME}
       o: bind
 
 networks:
@@ -78,10 +89,10 @@ networks:
 
 secrets:
   db_password:
-    file: ../secrets/db_password.txt
+    file: ${DB_PASSWORD_FILE}
   db_root_password:
-    file: ../secrets/db_root_password.txt
+    file: ${DB_ROOT_PASSWORD_FILE}
   wp_admin_password:
-    file: ../secrets/wp_admin_password.txt
+    file: ${WP_ADMIN_PASSWORD_FILE}
   wp_user_password:
-    file: ../secrets/wp_user_password.txt
+    file: ${WP_USER_PASSWORD_FILE}
