@@ -11,9 +11,15 @@
 # **************************************************************************** #
 
 NAME = inception
+DATA_PATH = /home/${USER}/data
 YAML = srcs/docker-compose.yml
 
-all: build run
+all: prepare build run
+
+prepare:
+	@mkdir -p $(DATA_PATH)/mariadb
+	@mkdir -p $(DATA_PATH)/wordpress
+	@echo "Created data directories in $(DATA_PATH)"
 
 build:
 	docker compose -f $(YAML) build
