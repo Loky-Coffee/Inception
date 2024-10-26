@@ -34,17 +34,6 @@ services:
       - db_password
       - wp_admin_password
       - wp_user_password
-    environment:
-      - WORDPRESS_DB_HOST=mariadb
-      - WORDPRESS_DB_NAME=${MYSQL_DATABASE}
-      - WORDPRESS_DB_USER=${MYSQL_USER}
-      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password
-      - WP_ADMIN_USER=${WP_ADMIN_USER}
-      - WP_ADMIN_PASSWORD_FILE=/run/secrets/wp_admin_password
-      - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
-      - WP_USER=${WP_USER}
-      - WP_USER_PASSWORD_FILE=/run/secrets/wp_user_password
-      - WP_USER_EMAIL=${WP_USER_EMAIL}
     depends_on:
       - mariadb
     networks:
@@ -74,7 +63,6 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      # Verwendet die Environment Variable
       device: ${DATA_PATH}/mariadb
       o: bind
   wordpress_data:
