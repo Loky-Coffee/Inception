@@ -72,8 +72,17 @@ services:
 volumes:
   mariadb_data:
     driver: local
+    driver_opts:
+      type: none
+      # Verwendet die Environment Variable
+      device: ${DATA_PATH}/mariadb
+      o: bind
   wordpress_data:
     driver: local
+    driver_opts:
+      type: none
+      device: ${DATA_PATH}/wordpress
+      o: bind
 
 networks:
   wordpress_network:
