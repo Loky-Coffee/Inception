@@ -2,9 +2,9 @@
 *.crt
 *.key
 *.pem
+*.cnf
 
-# Environment files
-#.env
+# secrets Passworter
 
 # Data directories
 /data/
