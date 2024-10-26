@@ -1,28 +1,28 @@
 FROM debian:stable-slim
 
-# Installiere benötigte Pakete
+# Install required packages
 RUN apt-get update && apt-get install -y \
-    curl \
-    gnupg2 \
-    ca-certificates \
-    lsb-release \
-    apt-transport-https \
+    nginx \
     openssl \
     netcat-traditional \
-    && curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add - \
-    && echo "deb https://nginx.org/packages/debian `lsb_release -cs` nginx" \
-    | tee /etc/apt/sources.list.d/nginx.list \
-    && apt-get update \
-    && apt-get install -y nginx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Kopiere Konfigurationsdateien
+# Create SSL directory and set permissions
+RUN mkdir -p /etc/nginx/ssl && \
+    chown -R www-data:www-data /etc/nginx/ssl && \
+    chmod 755 /etc/nginx/ssl
+
+# Copy configuration files
 COPY conf/nginx.conf /etc/nginx/conf.d/default.conf
 COPY tools/setup.sh /usr/local/bin/setup.sh
 RUN chmod +x /usr/local/bin/setup.sh
 
+# Create necessary directories
+RUN mkdir -p /var/www/html && \
+    chown -R www-data:www-data /var/www/html
+
 EXPOSE 443
 
-# Verwende setup.sh als Entrypoint
+# Use setup.sh as entrypoint
 ENTRYPOINT ["/usr/local/bin/setup.sh"]
