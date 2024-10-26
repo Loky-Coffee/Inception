@@ -1,8 +1,12 @@
 # SSL Certificates
+certificates/
+/certificates/
+/certificates/*
 *.crt
 *.key
 *.pem
 *.cnf
+*.srl
 
 # secrets Passworter
 
