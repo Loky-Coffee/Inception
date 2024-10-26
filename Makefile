@@ -20,6 +20,9 @@ prepare:
 	@mkdir -p $(DATA_PATH)/mariadb
 	@mkdir -p $(DATA_PATH)/wordpress
 	@echo "Created data directories in $(DATA_PATH)"
+	@mkdir -p srcs/certificates
+	@chmod 755 srcs/certificates
+	@echo "Created certificates directory in srcs/"
 
 build:
 	docker compose -f $(YAML) build

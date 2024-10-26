@@ -26,7 +26,7 @@ if [ ! -f /var/www/html/wp-config.php ]; then
 
     # Install WordPress
     wp core install \
-        --url="${WP_URL}" \
+        --url="https://${DOMAIN_NAME}" \
         --title="${WP_TITLE}" \
         --admin_user="${WP_ADMIN_USER}" \
         --admin_password="$(cat /run/secrets/wp_admin_password)" \
@@ -35,23 +35,46 @@ if [ ! -f /var/www/html/wp-config.php ]; then
         --path="/var/www/html" \
         --allow-root
 
-    # Create default page
+    # Create and set homepage
     wp post create \
         --post_type=page \
-        --post_title="Welcome to ${WP_TITLE}" \
-        --post_content="<h1>Welcome to ${DOMAIN_NAME}!</h1><p>This is your WordPress installation running in Docker.</p>" \
+        --post_title="Home" \
+        --post_content="<h1>Welcome to ${DOMAIN_NAME}</h1><p>Welcome to my WordPress site!</p>" \
         --post_status=publish \
+        --post_name="home" \
         --allow-root
 
-    # Set homepage
+    # Set homepage as front page
+    HOMEPAGE_ID=$(wp post list --post_type=page --post_name="home" --format=ids --allow-root)
     wp option update show_on_front 'page' --allow-root
-    wp option update page_on_front $(wp post list --post_type=page --post_status=publish --format=ids --allow-root | head -n 1) --allow-root
+    wp option update page_on_front "$HOMEPAGE_ID" --allow-root
+
+    # Create sample blog post
+    wp post create \
+        --post_type=post \
+        --post_title="Welcome" \
+        --post_content="Welcome to my first blog post!" \
+        --post_status=publish \
+        --allow-root
 
     # Create additional user
     wp user create "${WP_USER}" "${WP_USER_EMAIL}" \
         --role=author \
         --user_pass="$(cat /run/secrets/wp_user_password)" \
         --allow-root
+
+    # Update URLs in options table
+    wp option update home "https://${DOMAIN_NAME}" --allow-root
+    wp option update siteurl "https://${DOMAIN_NAME}" --allow-root
+
+    # Disable default themes and plugins
+    wp theme delete twentytwentytwo twentytwentythree --allow-root
+    wp theme activate twentytwentyone --allow-root
+    wp plugin deactivate akismet hello --allow-root
+    wp plugin delete akismet hello --allow-root
+
+    # Set permalink structure
+    wp rewrite structure '/%postname%/' --allow-root
 
     # Set correct permissions
     chown -R www-data:www-data /var/www/html
